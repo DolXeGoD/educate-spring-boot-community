@@ -5,6 +5,9 @@ import com.gbsw.board.entity.Board;
 import com.gbsw.board.entity.Like;
 import com.gbsw.board.entity.User;
 import com.gbsw.board.enums.AuthLevel;
+import com.gbsw.board.exceptions.AuthenticationFailureException;
+import com.gbsw.board.exceptions.AuthorizationFailureException;
+import com.gbsw.board.exceptions.ResourceNotFoundException;
 import com.gbsw.board.repository.BoardRepository;
 import com.gbsw.board.repository.LikeRepository;
 import com.gbsw.board.repository.UserRepository;
@@ -43,7 +46,7 @@ public class BoardService {
     // 게시글 작성
     public Board create(BoardCreate dto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("작성자 정보를 찾을 수 없습니다."));
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFoundException("작성자 정보를 찾을 수 없습니다."));
 
         Board board = Board.builder()
                 .title(dto.getTitle())
@@ -58,7 +61,7 @@ public class BoardService {
     public Board findById(Long id) {
         Board board = boardRepository.findById(id)
                 .filter(b -> !b.isDeleted())
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException("해당 게시글을 찾을 수 없습니다."));
 
         board.setViewCount(board.getViewCount() + 1);
         return boardRepository.save(board);
@@ -75,7 +78,7 @@ public class BoardService {
                 .anyMatch(auth -> auth.getAuthority().equals(AuthLevel.ADMIN.name()));
         // 권한 확인
         if (!board.getAuthor().getUsername().equals(currentUsername) && !isAdmin) {
-            throw new AccessDeniedException("수정 권한이 없습니다.");
+            throw new AuthorizationFailureException("수정 권한이 없습니다.");
         }
 
         board.setTitle(dto.getTitle());
@@ -94,7 +97,7 @@ public class BoardService {
                 .anyMatch(auth -> auth.getAuthority().equals(AuthLevel.ADMIN.name()));
         // 권한 확인
         if (!board.getAuthor().getUsername().equals(currentUsername) && !isAdmin) {
-            throw new AccessDeniedException("삭제 권한이 없습니다.");
+            throw new AuthenticationFailureException("삭제 권한이 없습니다.");
         }
 
         board.setDeleted(true);
@@ -106,10 +109,10 @@ public class BoardService {
     public int toggleLike(Long boardId) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException("사용자 정보를 찾을 수 없습니다."));
 
         Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException("해당 게시글을 찾을 수 없습니다."));
 
         Optional<Like> existing = likeRepository.findByUserAndBoard(user, board);
         if (existing.isPresent()) {

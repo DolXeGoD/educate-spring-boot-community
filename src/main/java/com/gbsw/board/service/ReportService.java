@@ -13,6 +13,7 @@ import com.gbsw.board.repository.BoardRepository;
 import com.gbsw.board.repository.CommentRepository;
 import com.gbsw.board.repository.ReportRepository;
 import com.gbsw.board.repository.UserRepository;
+import com.gbsw.board.service.discord.DiscordNotifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;

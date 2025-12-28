@@ -1,4 +1,4 @@
-package com.gbsw.board.service;
+package com.gbsw.board.service.discord;
 
 
 import com.gbsw.board.dto.discord.DiscordEmbed;
