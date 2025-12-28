@@ -6,6 +6,7 @@ import com.gbsw.board.dto.auth.SignupRequest;
 import com.gbsw.board.dto.auth.TokenResponse;
 import com.gbsw.board.dto.auth.VerifyCodeRequest;
 import com.gbsw.board.dto.auth.RefreshTokenDto;
+import com.gbsw.board.entity.AccessTokenBlacklist;
 import com.gbsw.board.entity.EmailVerification;
 import com.gbsw.board.entity.User;
 import com.gbsw.board.enums.AuthLevel;
@@ -13,8 +14,10 @@ import com.gbsw.board.enums.UserStatus;
 import com.gbsw.board.exceptions.AuthenticationFailureException;
 import com.gbsw.board.exceptions.ResourceAlreadyExistsException;
 import com.gbsw.board.exceptions.ResourceNotFoundException;
+import com.gbsw.board.repository.AccessTokenBlacklistRepository;
 import com.gbsw.board.repository.EmailVerificationRepository;
 import com.gbsw.board.repository.UserRepository;
+import com.gbsw.board.security.CustomUserDetails;
 import com.gbsw.board.service.token.RefreshTokenStorage;
 import com.gbsw.board.security.JwtTokenProvider;
 import jakarta.transaction.Transactional;
@@ -22,10 +25,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.Random;
 
 @Service
@@ -35,6 +41,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenStorage refreshTokenStorage;
+    private final AccessTokenBlacklistRepository accessTokenBlacklistRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailService emailService;
@@ -140,5 +147,27 @@ public class AuthService {
         String newAccessToken = jwtTokenProvider.createToken(token.getUsername());
 
         return new TokenResponse(newAccessToken, token.getToken());
+    }
+
+    @Transactional
+    public void logout(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        // refresh token 삭제
+        String username = authentication.getName();
+        refreshTokenStorage.deleteByUsername(username);
+
+        // access token 블랙리스트 추가
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        String token = userDetails.getCurrentAccessToken();
+
+        Date expDate = jwtTokenProvider.getExpiration(token);
+        LocalDateTime expiration = expDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+        AccessTokenBlacklist accessTokenBlacklist = AccessTokenBlacklist.builder()
+                .token(token)
+                .expirationDateTime(expiration)
+                .build();
+
+        accessTokenBlacklistRepository.save(accessTokenBlacklist);
     }
 }

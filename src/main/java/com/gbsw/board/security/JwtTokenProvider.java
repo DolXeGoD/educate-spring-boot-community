@@ -57,6 +57,16 @@ public class JwtTokenProvider {
                 .getSubject();
     }
 
+    // JWT에서 토큰 유효기간 추출
+    public Date getExpiration(String token){
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getExpiration();
+    }
+
     // 토큰 유효성 검증
     public boolean validateToken(String token) {
         try {
