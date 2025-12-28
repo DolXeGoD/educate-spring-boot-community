@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spring_app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+    networks:
+      - app-net
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - app-net
+
+volumes:
+  redis_data:
+
+networks:
+  app-net:
