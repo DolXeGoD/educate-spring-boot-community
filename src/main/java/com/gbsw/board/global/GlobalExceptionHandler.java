@@ -1,6 +1,7 @@
 package com.gbsw.board.global;
 
 import com.gbsw.board.dto.global.ApiResponse;
+import com.gbsw.board.dto.global.ValidationErrorDTO;
 import com.gbsw.board.exceptions.*;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Hidden
@@ -40,14 +42,22 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleValidationError(MethodArgumentNotValidException e) {
-        String resultMessage = "";
-        List<FieldError> errors = e.getBindingResult().getFieldErrors();
-        for (FieldError error : errors) {
-            resultMessage = resultMessage + error.getField() + "은(는)" + error.getDefaultMessage() + "\n";
+    public ResponseEntity<ApiResponse<List<ValidationErrorDTO>>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        List<ValidationErrorDTO> errorResults = new ArrayList<>();
+        // 검증 통과 못한 폼 갯수만큼 반복
+        for (FieldError error : e.getBindingResult().getFieldErrors()) {
+            // DTO 생성
+            errorResults.add(
+                    ValidationErrorDTO.builder()
+                            .message(error.getDefaultMessage())
+                            .field(error.getField())
+                            .build()
+            );
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(resultMessage));
+
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error(errorResults, "잘못 입력된 값이 있습니다."));
     }
 
     @ExceptionHandler(InvalidStateException.class)
