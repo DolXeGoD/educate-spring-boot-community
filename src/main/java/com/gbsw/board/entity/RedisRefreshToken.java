@@ -2,6 +2,7 @@ package com.gbsw.board.entity;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
+import org.springframework.data.redis.core.index.Indexed;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ public class RedisRefreshToken {
     @Id
     private String token;
 
+    @Indexed
     private String username;
 
     private LocalDateTime expiryDate;

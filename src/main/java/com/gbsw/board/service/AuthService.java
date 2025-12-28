@@ -5,15 +5,14 @@ import com.gbsw.board.dto.auth.RefreshRequest;
 import com.gbsw.board.dto.auth.SignupRequest;
 import com.gbsw.board.dto.auth.TokenResponse;
 import com.gbsw.board.dto.auth.VerifyCodeRequest;
+import com.gbsw.board.dto.auth.RefreshTokenDto;
 import com.gbsw.board.entity.EmailVerification;
-import com.gbsw.board.entity.RedisRefreshToken;
-import com.gbsw.board.entity.RefreshToken;
 import com.gbsw.board.entity.User;
 import com.gbsw.board.enums.AuthLevel;
 import com.gbsw.board.enums.UserStatus;
 import com.gbsw.board.repository.EmailVerificationRepository;
-import com.gbsw.board.repository.RefreshTokenRepository;
 import com.gbsw.board.repository.UserRepository;
+import com.gbsw.board.service.token.RefreshTokenStorage;
 import com.gbsw.board.security.JwtTokenProvider;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +31,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final RedisRefreshTokenService redisRefreshTokenService;
+    private final RefreshTokenStorage refreshTokenStorage;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailService emailService;
@@ -119,41 +117,19 @@ public class AuthService {
         String accessToken = jwtTokenProvider.createToken(authentication.getName());
         String refreshToken = jwtTokenProvider.createRefreshToken(authentication.getName());
 
-        // redisRefreshTokenService.save(refreshToken, request.getUsername()); // Redis
-        // 저장
-
-        /* 아래 코드는, MySQL을 통한 관리를 진행할 때 사용 */
-        refreshTokenRepository.deleteByUsername(request.getUsername());
-        refreshTokenRepository.save(RefreshToken.builder()
-                .token(refreshToken)
-                .username(request.getUsername())
-                .expiryDate(LocalDateTime.now().plusDays(7))
-                .build());
+        refreshTokenStorage.deleteByUsername(request.getUsername());
+        refreshTokenStorage.save(refreshToken, request.getUsername(), LocalDateTime.now().plusDays(7));
 
         return new TokenResponse(accessToken, refreshToken);
     }
 
     // 리프레시 토큰을 이용한 엑세스 토큰 재발급
     public TokenResponse refresh(RefreshRequest request) {
-        /* 아래 코드는, Redis를 통한 관리를 진행할 때 사용 */
-        // RedisRefreshToken token =
-        // redisRefreshTokenService.findByToken(request.getRefreshToken());
-        //
-        // if (token == null) {
-        // throw new RuntimeException("유효하지 않은 리프레시 토큰입니다.");
-        // }
-        //
-        // if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
-        // redisRefreshTokenService.delete(request.getRefreshToken());
-        // throw new RuntimeException("리프레시 토큰이 만료되었습니다.");
-        // }
-
-        /* 아래 코드는, MySQL을 통한 관리를 진행할 때 사용 */
-        RefreshToken token = refreshTokenRepository.findByToken(request.getRefreshToken())
+        RefreshTokenDto token = refreshTokenStorage.findByToken(request.getRefreshToken())
                 .orElseThrow(() -> new RuntimeException("유효하지 않은 리프레시 토큰입니다."));
 
         if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
-            refreshTokenRepository.delete(token);
+            refreshTokenStorage.deleteByToken(request.getRefreshToken());
             throw new RuntimeException("리프레시 토큰이 만료되었습니다.");
         }
 
