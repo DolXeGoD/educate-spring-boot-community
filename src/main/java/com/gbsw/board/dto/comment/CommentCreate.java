@@ -1,6 +1,7 @@
 package com.gbsw.board.dto.comment;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 // 댓글 작성 요청 DTO
@@ -10,6 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class CommentCreate {
+    @NotBlank(message = "댓글 내용은 필수입니다.")
     private String content;
 
     @JsonProperty("parent_id")

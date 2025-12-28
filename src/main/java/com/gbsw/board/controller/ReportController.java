@@ -5,6 +5,7 @@ import com.gbsw.board.dto.report.AdminReportProcessRequest;
 import com.gbsw.board.dto.report.AdminReportSummaryResponse;
 import com.gbsw.board.dto.report.ReportRequest;
 import com.gbsw.board.service.ReportService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,7 +22,7 @@ public class ReportController {
 
     // 사용자 : 신고 제출
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> reportContent(@RequestBody ReportRequest dto) {
+    public ResponseEntity<ApiResponse<Void>> reportContent(@Valid @RequestBody ReportRequest dto) {
         reportService.reportContent(dto);
         return ResponseEntity.ok(ApiResponse.ok());
     }
@@ -36,9 +37,8 @@ public class ReportController {
     // 어드민 : 신고 건 처리 (승인 or 거절)
     @PostMapping("/process")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> processReport(@RequestBody AdminReportProcessRequest request) {
+    public ResponseEntity<ApiResponse<Void>> processReport(@Valid @RequestBody AdminReportProcessRequest request) {
         reportService.processReport(request);
         return ResponseEntity.ok(ApiResponse.ok());
     }
 }
-

@@ -4,6 +4,7 @@ import com.gbsw.board.dto.comment.CommentCreate;
 import com.gbsw.board.dto.comment.CommentResponse;
 import com.gbsw.board.dto.global.ApiResponse;
 import com.gbsw.board.service.CommentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class CommentController {
     @PostMapping("/board/{boardId}")
     public ResponseEntity<ApiResponse<CommentResponse>> createComment(
             @PathVariable Long boardId,
-            @RequestBody CommentCreate dto) {
+            @Valid @RequestBody CommentCreate dto) {
         CommentResponse response = commentService.create(boardId, dto);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
@@ -28,7 +29,7 @@ public class CommentController {
     @PutMapping("/{commentId}")
     public ResponseEntity<ApiResponse<CommentResponse>> updateComment(
             @PathVariable Long commentId,
-            @RequestBody CommentCreate dto) {
+            @Valid @RequestBody CommentCreate dto) {
         CommentResponse response = commentService.update(commentId, dto);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }

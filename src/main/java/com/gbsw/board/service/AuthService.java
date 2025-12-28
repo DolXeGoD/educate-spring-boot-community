@@ -10,6 +10,9 @@ import com.gbsw.board.entity.EmailVerification;
 import com.gbsw.board.entity.User;
 import com.gbsw.board.enums.AuthLevel;
 import com.gbsw.board.enums.UserStatus;
+import com.gbsw.board.exceptions.AuthenticationFailureException;
+import com.gbsw.board.exceptions.ResourceAlreadyExistsException;
+import com.gbsw.board.exceptions.ResourceNotFoundException;
 import com.gbsw.board.repository.EmailVerificationRepository;
 import com.gbsw.board.repository.UserRepository;
 import com.gbsw.board.service.token.RefreshTokenStorage;
@@ -41,11 +44,11 @@ public class AuthService {
     @Transactional
     public void createPendingUser(SignupRequest request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new IllegalArgumentException("이미 존재하는 사용자명입니다.");
+            throw new ResourceAlreadyExistsException("이미 존재하는 사용자명입니다.");
         }
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
+            throw new ResourceAlreadyExistsException("이미 존재하는 이메일입니다.");
         }
 
         User user = User.builder()
@@ -85,7 +88,7 @@ public class AuthService {
     @Transactional
     public void verifyCode(VerifyCodeRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
 
         EmailVerification verification = emailVerificationRepository.findByUserAndCode(user, request.getCode())
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 인증번호입니다."));
@@ -106,10 +109,10 @@ public class AuthService {
     @Transactional
     public TokenResponse login(LoginRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResourceNotFoundException("사용자를 찾을 수 없습니다."));
 
         if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new IllegalArgumentException("이메일 인증이 완료되지 않았습니다.");
+            throw new AuthenticationFailureException("이메일 인증이 완료되지 않았습니다.");
         }
 
         Authentication authentication = authenticationManager.authenticate(
@@ -126,11 +129,11 @@ public class AuthService {
     // 리프레시 토큰을 이용한 엑세스 토큰 재발급
     public TokenResponse refresh(RefreshRequest request) {
         RefreshTokenDto token = refreshTokenStorage.findByToken(request.getRefreshToken())
-                .orElseThrow(() -> new RuntimeException("유효하지 않은 리프레시 토큰입니다."));
+                .orElseThrow(() -> new AuthenticationFailureException("유효하지 않은 리프레시 토큰입니다."));
 
         if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
             refreshTokenStorage.deleteByToken(request.getRefreshToken());
-            throw new RuntimeException("리프레시 토큰이 만료되었습니다.");
+            throw new AuthenticationFailureException("리프레시 토큰이 만료되었습니다.");
         }
 
         // AccessToken 만 새로 발급, RefreshToken 은 그대로 유지
