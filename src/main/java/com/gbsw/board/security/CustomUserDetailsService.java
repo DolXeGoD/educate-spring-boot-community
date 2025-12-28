@@ -2,10 +2,15 @@ package com.gbsw.board.security;
 
 import com.gbsw.board.entity.User;
 import com.gbsw.board.repository.UserRepository;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -22,10 +27,14 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
 
-        return org.springframework.security.core.userdetails.User.builder()
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(user.getAuthLevel().toString()));
+
+        return CustomUserDetails.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
-                .authorities(user.getAuthLevel().toString())
+                .authorities(authorities)
+                .userId(user.getId())
                 .build();
     }
 }
