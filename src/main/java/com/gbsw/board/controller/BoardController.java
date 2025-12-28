@@ -12,6 +12,7 @@ import com.gbsw.board.service.BoardService;
 import com.gbsw.board.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +21,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 
 @RestController
 @RequestMapping("/api/board")
@@ -36,17 +36,15 @@ public class BoardController {
     public ResponseEntity<ApiResponse<Page<BoardSummaryResponse>>> getAllBoards(
             Authentication auth,
             @RequestParam(defaultValue = "RECENT") BoardSortType sortType,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
 
         Page<BoardSummaryResponse> boards = boardService.findAll(sortType, pageable)
                 .map(board -> {
-                    System.out.println(board.getAuthor().getUsername());  // 여기서 먼저 접근
+                    System.out.println(board.getAuthor().getUsername()); // 여기서 먼저 접근
                     return new BoardSummaryResponse(
                             board,
                             boardService.isLikedByUser(board, auth),
-                            commentService.getCommentCount(board)
-                    );
+                            commentService.getCommentCount(board));
                 });
 
         return ResponseEntity.ok(ApiResponse.ok(boards));
@@ -69,8 +67,7 @@ public class BoardController {
                 .map(board -> new BoardSummaryResponse(
                         board,
                         boardService.isLikedByUser(board, auth),
-                        commentService.getCommentCount(board)
-                ))
+                        commentService.getCommentCount(board)))
                 .toList();
 
         return ResponseEntity.ok(boards);
@@ -78,13 +75,12 @@ public class BoardController {
 
     @PostMapping
     @Operation(summary = "게시글 생성", description = "게시글 신규 등록(생성) 시 사용하는 API 입니다.")
-    public ResponseEntity<ApiResponse<BoardDetailResponse>> createBoard(@RequestBody BoardCreate dto) {
+    public ResponseEntity<ApiResponse<BoardDetailResponse>> createBoard(@Valid @RequestBody BoardCreate dto) {
         Board board = boardService.create(dto);
         BoardDetailResponse boardResponse = new BoardDetailResponse(
                 board,
                 false,
-                null
-        );
+                null);
 
         return ResponseEntity.ok(ApiResponse.ok(boardResponse));
     }
@@ -93,9 +89,8 @@ public class BoardController {
     @Operation(summary = "게시글 수정", description = "등록되어 있는 기존 게시글 수정 시 사용하는 API 입니다.")
     public ResponseEntity<ApiResponse<BoardDetailResponse>> updateBoard(
             @PathVariable Long id,
-            @RequestBody BoardCreate dto,
-            Authentication auth
-    ) {
+            @Valid @RequestBody BoardCreate dto,
+            Authentication auth) {
         Board board = boardService.update(id, dto);
         boolean likedByMe = boardService.isLikedByUser(board, auth);
         List<CommentResponse> comments = commentService.findByBoardId(board.getId());
@@ -103,8 +98,7 @@ public class BoardController {
         BoardDetailResponse boardResponse = new BoardDetailResponse(
                 board,
                 likedByMe,
-                comments
-        );
+                comments);
 
         return ResponseEntity.ok(ApiResponse.ok(boardResponse));
     }

@@ -28,12 +28,25 @@ public class ApiGlobalResponseHandler {
                 .body(ApiResponse.error(e.getMessage()));
     }
 
+    // Validation 에러 핸들링
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Void>> handleValidationExceptions(
+            org.springframework.web.bind.MethodArgumentNotValidException e) {
+        String errorMessage = e.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> fieldError.getDefaultMessage())
+                .findFirst()
+                .orElse("입력 값이 올바르지 않습니다.");
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(errorMessage));
+    }
+
     // 여기서 PreAuthorize 실패 시 발생하는 스프링 시큐리티 관련 예외까지 다 잡아버린다 ;; 개오바임
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<ApiResponse<Void>> handleException(Exception e){
-//
-//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                .body(ApiResponse.error(e.getMessage()));
-//    }
+    // @ExceptionHandler(Exception.class)
+    // public ResponseEntity<ApiResponse<Void>> handleException(Exception e){
+    //
+    // return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+    // .body(ApiResponse.error(e.getMessage()));
+    // }
 
 }

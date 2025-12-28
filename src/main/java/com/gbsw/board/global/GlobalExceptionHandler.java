@@ -25,8 +25,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({
-            AuthorizationFailureException.class, // 우리 커스텀 권한 거절 exception
-            AuthorizationDeniedException.class // 스프링 시큐리티 권한 거절 exception
+            AuthorizationFailureException.class, // 인가 custom exception
+            AuthorizationDeniedException.class // from Spring Security @PreAuthorize
     })
     public ResponseEntity<ApiResponse<?>> handleUnauthorized(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
