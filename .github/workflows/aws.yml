@@ -85,10 +85,9 @@ jobs:
       - name: Download current task definition
         run: |
           aws ecs describe-task-definition \
-            --task-definition ${{ env.ECS_TASK_DEFINITION }} \
-            --query taskDefinition > task-definition.json \
-            jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .enableFaultInjection)' \
-            > task-definition.json
+          --task-definition ${{ env.ECS_TASK_DEFINITION }} \
+          --query 'taskDefinition.{family:family,containerDefinitions:containerDefinitions,cpu:cpu,memory:memory,networkMode:networkMode,requiresCompatibilities:requiresCompatibilities,executionRoleArn:executionRoleArn,taskRoleArn:taskRoleArn}' \
+          > task-definition.json
 
       - name: Update task definition with new image
         id: task-def
