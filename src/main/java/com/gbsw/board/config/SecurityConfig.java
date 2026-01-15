@@ -52,6 +52,7 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/refresh"
                         ).permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/board/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
