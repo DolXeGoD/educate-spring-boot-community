@@ -1,6 +1,6 @@
 package com.gbsw.board.controller;
 
-import com.gbsw.board.service.DiscordNotifier;
+import com.gbsw.board.service.discord.DiscordNotifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
