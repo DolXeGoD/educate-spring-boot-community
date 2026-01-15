@@ -84,7 +84,7 @@ jobs:
       - name: Download current task definition
         run: |
           aws ecs describe-task-definition \
-            --task-definition ${{ env.ECS_SERVICE }} \
+            --task-definition ${{ env.AWS_ECS_SERVICE }} \
             --query taskDefinition > task-definition.json
 
       - name: Update task definition with new image
@@ -99,6 +99,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE }}
-          cluster: ${{ env.ECS_CLUSTER }}
+          service: ${{ env.AWS_ECS_SERVICE }}
+          cluster: ${{ env.AWS_ECS_CLUSTER }}
           wait-for-service-stability: true
