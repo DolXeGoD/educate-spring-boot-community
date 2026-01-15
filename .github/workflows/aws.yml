@@ -35,6 +35,7 @@ env:
   ECR_REPOSITORY: ${{ secrets.AWS_ECR_REPOSITORY }}
   ECS_SERVICE: ${{ secrets.AWS_ECS_SERVICE }}
   ECS_CLUSTER: ${{ secrets.AWS_ECS_CLUSTER }}
+  ECS_TASK_DEFINITION: ${{ secrets.AWS_ECS_TASK_DEF }}
   CONTAINER_NAME: spring-app           
                                        
 permissions:
@@ -84,7 +85,7 @@ jobs:
       - name: Download current task definition
         run: |
           aws ecs describe-task-definition \
-            --task-definition ${{ env.ECS_SERVICE }} \
+            --task-definition ${{ env.ECS_TASK_DEFINITION }} \
             --query taskDefinition > task-definition.json
 
       - name: Update task definition with new image
