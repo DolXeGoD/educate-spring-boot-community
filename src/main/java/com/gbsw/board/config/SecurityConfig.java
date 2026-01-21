@@ -52,6 +52,13 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/refresh"
                         ).permitAll()
+                        .requestMatchers(
+                                "/api/passwordless/status",
+                                "/api/passwordless/register",
+                                "/api/passwordless/login-trigger",
+                                "/api/passwordless/result",
+                                "/api/passwordless/cancel"
+                        ).permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/board/**").permitAll()
                         .requestMatchers(
